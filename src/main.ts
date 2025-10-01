@@ -69,27 +69,49 @@ const apiService = new ApiService(api);
 
 async function testApi() {
     // 1. Получение массива товаров с сервера
+    try {
     const products = await apiService.getProducts();
     console.log("Каталог товаров (с сервера)", products);
 
     // 2. Сохраняем товары в модель
     productsModel.setItems(products);
     console.log("Каталог из модели после загрузки", productsModel.getItems());
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("Ошибка при получении товаров:", error.message);
+        } else {
+            console.error("Неизвестная ошибка при получении товаров:", error)
+        }
+        return;
+    }
 
     // 3. Отправка заказа (проверка postOrder)
+    try {
+        const items = productsModel.getItems();
+        if (items.length < 2) {
+            console.warn("Недостаточно товаров для тестового заказа — пропускаю отправку.")
+            return; // не делаем запрос, если товаров малоп
+        }
+    
     const orderResponse = await apiService.postOrder({
         payment: "online",
         email: "test@test.ru",
         phone: "+71234567890",
         address: "Spb Vosstania 1",
         total: 2200,
-        items: [products[0].id, products[1].id]
+        items: [items[0].id, items[1].id]
             
         
     });
 
     console.log("Ответ сервера на заказ", orderResponse);
+} catch (error) {
+    if (error instanceof Error) {
+        console.error("Ошибка при отправке заказа:", error.message);
+    } else {
+        console.error("Неизвестная ошибка при отправке заказа:", error);
+    }
 }
-
+}
 testApi();
 
